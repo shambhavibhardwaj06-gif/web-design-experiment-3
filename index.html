@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>To-Do List</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:grid;place-items:center;padding:20px;margin:0}
+.container{background:white;padding:25px;border-radius:15px;width:100%;max-width:450px;box-shadow:0 8px 25px #0003}
+h1{text-align:center;color:#333}
+p{text-align:center;color:#777}
+form,.info{display:flex;gap:10px;margin:15px 0}
+input[type=text]{flex:1;min-width:0;padding:12px;border:1px solid #ccc;border-radius:7px}
+button{padding:10px;border:0;border-radius:7px;cursor:pointer}
+.add{background:#667eea;color:white}
+.info{justify-content:space-between;align-items:center;font-size:13px;color:#555}
+.clear{background:none;color:#667eea}
+ul{list-style:none;padding:0}
+li{display:flex;align-items:center;gap:10px;background:#f3f4ff;padding:12px;margin:8px 0;border-radius:7px}
+.task{flex:1;overflow-wrap:anywhere}
+.done .task{text-decoration:line-through;color:#999}
+.del{background:#ffe5e5;color:#c22}
+#empty{text-align:center;color:#999}
+@media(max-width:350px){form{flex-wrap:wrap}input[type=text]{flex-basis:100%}.add{width:100%}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>My To-Do List</h1>
+<p>Organize your day</p>
+<form id="form">
+<input id="input" type="text" placeholder="Enter a task..." maxlength="300" required>
+<button class="add">Add</button>
+</form>
+<div class="info">
+<span id="count">0 tasks left</span>
+<button class="clear" type="button" id="clear">Clear completed</button>
+</div>
+<ul id="list"></ul>
+<p id="empty">No tasks yet. Add your first task.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let tasks=[];
+try{const saved=JSON.parse(localStorage.getItem("tasks"));if(Array.isArray(saved))tasks=saved.filter(t=>t&&typeof t.id==="string"&&typeof t.text==="string"&&typeof t.done==="boolean")}catch{}
+function save(){try{localStorage.setItem("tasks",JSON.stringify(tasks))}catch(e){console.error(e)}}
+function render(){
+$("list").replaceChildren();
+tasks.forEach(t=>{
+const li=document.createElement("li");
+if(t.done)li.classList.add("done");
+const cb=document.createElement("input");
+cb.type="checkbox";cb.checked=t.done;cb.setAttribute("aria-label","Complete task");
+cb.onchange=()=>{t.done=cb.checked;save();render()};
+const span=document.createElement("span");
+span.className="task";span.textContent=t.text;
+const del=document.createElement("button");
+del.className="del";del.textContent="Delete";del.type="button";
+del.onclick=()=>{tasks=tasks.filter(x=>x.id!==t.id);save();render()};
+li.append(cb,span,del);$("list").append(li);
+});
+const n=tasks.filter(t=>!t.done).length;
+$("count").textContent=n+" task"+(n===1?"":"s")+" left";
+$("empty").hidden=tasks.length>0;
+}
+$("form").onsubmit=e=>{
+e.preventDefault();
+const text=$("input").value.trim();
+if(!text)return;
+tasks.push({id:Date.now().toString()+Math.random(),text,done:false});
+save();render();$("input").value="";$("input").focus();
+};
+$("clear").onclick=()=>{tasks=tasks.filter(t=>!t.done);save();render()};
+render();
+</script>
+</body>
+</html>
